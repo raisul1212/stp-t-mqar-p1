@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+*.tar.gz
+logs/
+outputs/
+wandb/
+*.pt
+*.ckpt
