@@ -59,6 +59,30 @@ cd "$WORKSPACE/zoology"
 # ── Run sweep (STP_MODELS is read inside mqar_p1.py) ──
 echo "[1/3] Running experiment sweep (models: ${STP_MODELS})..."
 python3 -m zoology.launch "$REPO_DIR/configs/mqar_p1.py" 2>&1 | tee "$WORKSPACE/experiment_log.txt"
+LAUNCH_EXIT=$?
+
+# Check if anything actually ran
+N_COMPLETED=$(ls "$STP_RESULTS_DIR/runs/"*.json 2>/dev/null | wc -l)
+N_WANDB=$(ls -d "$WORKSPACE/zoology/wandb/offline-run-"* 2>/dev/null | wc -l)
+
+if [ "$LAUNCH_EXIT" -ne 0 ] && [ "$N_COMPLETED" -eq 0 ] && [ "$N_WANDB" -eq 0 ]; then
+    echo ""
+    echo "============================================"
+    echo "ERROR: Sweep failed with no completed runs."
+    echo "============================================"
+    echo ""
+    echo "Check the error above. Common fixes:"
+    echo "  fla/BitNet conflict  →  pip install flash-linear-attention --break-system-packages --force-reinstall --no-deps"
+    echo "  Missing module       →  rerun: bash $REPO_DIR/scripts/setup.sh"
+    echo "  OOM                  →  reduce batch_size in configs/mqar_p1.py (256 → 128)"
+    echo ""
+    echo "Or skip the broken baselines and run only STP:"
+    echo "  bash $REPO_DIR/scripts/run.sh stp_v3,stp_v4"
+    echo ""
+    exit 1
+fi
+
+echo "  Completed runs: $N_COMPLETED (JSON) + $N_WANDB (WandB)"
 
 # ── Extract results ──
 echo ""

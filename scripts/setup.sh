@@ -66,13 +66,44 @@ else
         && ok "PyTorch installed" || { fail "PyTorch failed"; exit 1; }
 fi
 
-# fla
+# fla (for GLA, DeltaNet, Gated DeltaNet, Mamba2, RetNet)
+# MUST get 0.4.1+ which has exist_ok=True in AutoConfig.register.
+# Older versions crash on pods where transformers already registers BitNet.
+FLA_OK=0
 if python3 -c "from fla.layers import GatedLinearAttention" 2>/dev/null; then
-    ok "flash-linear-attention (existing)"
-else
-    pip install flash-linear-attention --break-system-packages -q --no-deps \
-        && ok "flash-linear-attention installed" \
-        || warn "fla failed (some baselines will be skipped)"
+    ok "flash-linear-attention (existing, import OK)"
+    FLA_OK=1
+fi
+
+if [ "$FLA_OK" -eq 0 ]; then
+    pip install "flash-linear-attention>=0.4.1" --break-system-packages -q --no-deps --force-reinstall \
+        && ok "flash-linear-attention installed (forced 0.4.1+)" \
+        || warn "fla pip install failed"
+
+    # Verify import works
+    if python3 -c "from fla.layers import GatedLinearAttention" 2>/dev/null; then
+        ok "fla import verified"
+        FLA_OK=1
+    else
+        # Fallback: patch BitNet __init__.py to add exist_ok=True
+        warn "fla import failing — attempting BitNet registration patch"
+        FLA_BITNET=$(python3 -c "import fla; import os; print(os.path.join(os.path.dirname(fla.__file__), 'models', 'bitnet', '__init__.py'))" 2>/dev/null)
+        if [ -n "$FLA_BITNET" ] && [ -f "$FLA_BITNET" ]; then
+            # Add exist_ok=True to all .register() calls that lack it
+            sed -i 's/\.register(\([^)]*\))/\.register(\1, exist_ok=True)/g' "$FLA_BITNET"
+            # Clean up any doubled exist_ok from re-running
+            sed -i 's/exist_ok=True, exist_ok=True/exist_ok=True/g' "$FLA_BITNET"
+
+            if python3 -c "from fla.layers import GatedLinearAttention" 2>/dev/null; then
+                ok "fla import fixed (patched BitNet registration)"
+                FLA_OK=1
+            else
+                warn "fla still broken — FLA baselines (RetNet, GLA, DeltaNet, Mamba2) will be skipped"
+            fi
+        else
+            warn "Could not locate fla BitNet __init__.py — FLA baselines will be skipped"
+        fi
+    fi
 fi
 
 # ── Zoology ──

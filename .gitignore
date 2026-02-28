@@ -8,3 +8,5 @@ outputs/
 wandb/
 *.pt
 *.ckpt
+".claude/" 
+".claude/" 
