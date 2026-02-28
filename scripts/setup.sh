@@ -151,16 +151,43 @@ else
     ok "Patch already applied: return_embeddings=False"
 fi
 
-# Fix 2: pydantic v2 rejects `str = None`. Change to Optional[str] = None.
-if grep -q "project_name: str = None" zoology/config.py 2>/dev/null; then
-    if ! grep -q "Optional" zoology/config.py; then
-        sed -i '0,/from typing import/{s/from typing import/from typing import Optional, /}' zoology/config.py
-    fi
-    sed -i 's/project_name: str = None/project_name: Optional[str] = None/' zoology/config.py
-    sed -i 's/entity: str = None/entity: Optional[str] = None/' zoology/config.py
-    ok "Patched: pydantic v2 LoggerConfig"
-else
+# Fix 2: pydantic v2 compatibility for LoggerConfig.
+# Zoology defines `project_name: str = None` which pydantic v2 rejects.
+# Previous manual fixes may have set it to `str = ""` which also breaks
+# (WandbLogger checks `is None` to skip logging).
+# Correct target: `Optional[str] = None`
+#
+# Strategy: test if it works. If not, rewrite the lines regardless of current state.
+PYDANTIC_OK=$(python3 -c "
+from zoology.config import LoggerConfig
+lc = LoggerConfig()
+assert lc.project_name is None and lc.entity is None
+print('ok')
+" 2>/dev/null || echo "fail")
+
+if [ "$PYDANTIC_OK" = "ok" ]; then
     ok "Patch already applied: pydantic v2 LoggerConfig"
+else
+    # Ensure Optional is in the typing import line (not just anywhere in the file)
+    if ! grep "from typing import" zoology/config.py | grep -q "Optional"; then
+        sed -i 's/from typing import \(.*\)/from typing import Optional, \1/' zoology/config.py
+    fi
+    # Replace whatever the current project_name/entity lines are
+    sed -i 's/project_name:.*$/project_name: Optional[str] = None/' zoology/config.py
+    sed -i 's/entity:.*$/entity: Optional[str] = None/' zoology/config.py
+    # Verify
+    PYDANTIC_CHECK=$(python3 -c "
+from zoology.config import LoggerConfig
+lc = LoggerConfig()
+assert lc.project_name is None and lc.entity is None
+print('ok')
+" 2>/dev/null || echo "fail")
+    if [ "$PYDANTIC_CHECK" = "ok" ]; then
+        ok "Patched: pydantic v2 LoggerConfig"
+    else
+        fail "Could not fix LoggerConfig — check zoology/config.py manually"
+        exit 1
+    fi
 fi
 
 # ── 5. STP mixer ──
