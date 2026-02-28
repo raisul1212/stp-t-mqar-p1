@@ -130,6 +130,19 @@ else
     ok "return_embeddings fix already applied"
 fi
 
+# pydantic v2 fix: LoggerConfig uses `str = None` which is invalid in pydantic v2.
+# Change to Optional[str] so None is accepted.
+if grep -q "project_name: str = None" zoology/config.py 2>/dev/null; then
+    # Add Optional import if not already present
+    grep -q "from typing import.*Optional" zoology/config.py || \
+        sed -i 's/from typing import/from typing import Optional,/' zoology/config.py
+    sed -i 's/project_name: str = None/project_name: Optional[str] = None/' zoology/config.py
+    sed -i 's/entity: str = None/entity: Optional[str] = None/' zoology/config.py
+    ok "Applied pydantic v2 LoggerConfig fix"
+else
+    ok "pydantic v2 LoggerConfig fix already applied"
+fi
+
 # ── STP mixer ──
 echo "[5/7] STP-T mixer..."
 if [ ! -d "$REPO_DIR" ]; then

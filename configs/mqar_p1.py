@@ -241,7 +241,7 @@ for model in models:
             data=data,
             learning_rate=lr,
             max_epochs=32,
-            logger=LoggerConfig(project_name=None, entity=None),
+            logger=LoggerConfig(),
             slice_keys=["num_kv_pairs"],
             sweep_id=sweep_name,
             run_id=run_id,
