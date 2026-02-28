@@ -76,7 +76,7 @@ if python3 -c "from fla.layers import GatedLinearAttention" 2>/dev/null; then
 fi
 
 if [ "$FLA_OK" -eq 0 ]; then
-    pip install "flash-linear-attention>=0.4.1" --break-system-packages -q --no-deps --force-reinstall \
+    pip install "flash-linear-attention>=0.4.1" fla-core --break-system-packages -q --force-reinstall \
         && ok "flash-linear-attention installed (forced 0.4.1+)" \
         || warn "fla pip install failed"
 
