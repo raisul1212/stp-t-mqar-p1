@@ -66,7 +66,9 @@ for lr in np.logspace(-3, -1.5, 4):
         ),
         model=model,
         logger=LoggerConfig(),
-        train=TrainConfig.Train(learning_rate=float(lr), max_epochs=32, early_stop_patience=64),
+        learning_rate=float(lr),
+        max_epochs=32,
+        slice_keys=["num_kv_pairs"],
         run_id=run_id,
         sweep_id=sweep_id,
     )
