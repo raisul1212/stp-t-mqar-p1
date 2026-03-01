@@ -38,6 +38,8 @@ test_configs = [
     MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=1024, num_examples=1_000, num_kv_pairs=256),
 ]
 
+input_seq_len = max([c.input_seq_len for c in train_configs + test_configs])
+
 data = DataConfig(
     train_configs=train_configs,
     test_configs=test_configs,
@@ -52,6 +54,7 @@ d_model = 256
 conv_mixer = dict(
     name="zoology.mixers.base_conv.BaseConv",
     kwargs={
+        "l_max": input_seq_len,
         "kernel_size": 3,
         "implicit_long_conv": True,
     },
