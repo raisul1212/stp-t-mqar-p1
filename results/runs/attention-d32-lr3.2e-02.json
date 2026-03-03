@@ -1,0 +1,45 @@
+{
+  "run_id": "attention-d32-lr3.2e-02",
+  "model_name": "attention",
+  "d_model": 32,
+  "n_layers": 2,
+  "vocab_size": 8192,
+  "num_parameters": 267872,
+  "learning_rate": 0.03162277660168379,
+  "max_epochs": 32,
+  "training_time_seconds": 8.3,
+  "best_epoch": 0,
+  "best_valid_accuracy": 0.9998376116071429,
+  "best_valid_loss": 0.011587503366172314,
+  "best_accuracy_by_kv_pairs": {
+    "4": 1.0,
+    "8": 0.999625,
+    "16": 1.0,
+    "32": 0.99990625,
+    "64": 0.99990625,
+    "128": 0.99984375,
+    "256": 0.99958203125
+  },
+  "final_epoch": 0,
+  "final_valid_accuracy": 0.9998376116071429,
+  "final_valid_loss": 0.011587503366172314,
+  "final_accuracy_by_kv_pairs": {
+    "4": 1.0,
+    "8": 0.999625,
+    "16": 1.0,
+    "32": 0.99990625,
+    "64": 0.99990625,
+    "128": 0.99984375,
+    "256": 0.99958203125
+  },
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "valid_accuracy": 0.9998376116071429,
+      "valid_loss": 0.011587503366172314
+    }
+  ],
+  "checkpoint_path": "/workspace/checkpoints/attention-d32-lr3.2e-02/best.pt",
+  "timestamp": "2026-03-01T15:33:17.088384",
+  "sweep_id": "stp-t-mqar-p1-f5237d"
+}

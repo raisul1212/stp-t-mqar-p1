@@ -1,0 +1,60 @@
+{
+  "run_id": "based-d128-lr1.0e-03",
+  "model_name": "based",
+  "d_model": 128,
+  "n_layers": 2,
+  "vocab_size": 8192,
+  "num_parameters": 1105792,
+  "learning_rate": 0.001,
+  "max_epochs": 32,
+  "training_time_seconds": 132.2,
+  "best_epoch": 3,
+  "best_valid_accuracy": 0.9920853794642858,
+  "best_valid_loss": 0.1204565092921257,
+  "best_accuracy_by_kv_pairs": {
+    "4": 1.0,
+    "8": 1.0,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.999953125,
+    "128": 0.998796875,
+    "256": 0.94584765625
+  },
+  "final_epoch": 3,
+  "final_valid_accuracy": 0.9920853794642858,
+  "final_valid_loss": 0.1204565092921257,
+  "final_accuracy_by_kv_pairs": {
+    "4": 1.0,
+    "8": 1.0,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.999953125,
+    "128": 0.998796875,
+    "256": 0.94584765625
+  },
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "valid_accuracy": 0.9674084821428571,
+      "valid_loss": 0.34788814187049866
+    },
+    {
+      "epoch": 1,
+      "valid_accuracy": 0.98201171875,
+      "valid_loss": 0.2143259346485138
+    },
+    {
+      "epoch": 2,
+      "valid_accuracy": 0.9896160714285714,
+      "valid_loss": 0.14895154535770416
+    },
+    {
+      "epoch": 3,
+      "valid_accuracy": 0.9920853794642858,
+      "valid_loss": 0.1204565092921257
+    }
+  ],
+  "checkpoint_path": "/workspace/checkpoints/based-d128-lr1.0e-03/best.pt",
+  "timestamp": "2026-03-03T07:26:13.756953",
+  "sweep_id": "stp-t-mqar-p1-5e0152"
+}

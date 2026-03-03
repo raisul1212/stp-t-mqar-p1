@@ -1,0 +1,200 @@
+{
+  "run_id": "gated_delta_net-d128-lr1.0e-03",
+  "model_name": "gated_delta_net",
+  "d_model": 128,
+  "n_layers": 2,
+  "vocab_size": 8192,
+  "num_parameters": 1167878,
+  "learning_rate": 0.001,
+  "max_epochs": 32,
+  "training_time_seconds": 635.6,
+  "best_epoch": 13,
+  "best_valid_accuracy": 0.988140625,
+  "best_valid_loss": 0.10190533101558685,
+  "best_accuracy_by_kv_pairs": {
+    "4": 0.99975,
+    "8": 0.999875,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.999984375,
+    "128": 0.99971875,
+    "256": 0.91765625
+  },
+  "final_epoch": 31,
+  "final_valid_accuracy": 0.9858794642857143,
+  "final_valid_loss": 0.08126260340213776,
+  "final_accuracy_by_kv_pairs": {
+    "4": 1.0,
+    "8": 0.999875,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 1.0,
+    "128": 0.999703125,
+    "256": 0.901578125
+  },
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "valid_accuracy": 0.9503409598214285,
+      "valid_loss": 0.47709470987319946
+    },
+    {
+      "epoch": 1,
+      "valid_accuracy": 0.9634469866071429,
+      "valid_loss": 0.35590532422065735
+    },
+    {
+      "epoch": 2,
+      "valid_accuracy": 0.9702728794642858,
+      "valid_loss": 0.29881760478019714
+    },
+    {
+      "epoch": 3,
+      "valid_accuracy": 0.9738264508928571,
+      "valid_loss": 0.26553836464881897
+    },
+    {
+      "epoch": 4,
+      "valid_accuracy": 0.9765892857142857,
+      "valid_loss": 0.23859091103076935
+    },
+    {
+      "epoch": 5,
+      "valid_accuracy": 0.9791473214285714,
+      "valid_loss": 0.21292802691459656
+    },
+    {
+      "epoch": 6,
+      "valid_accuracy": 0.9822377232142857,
+      "valid_loss": 0.1863565742969513
+    },
+    {
+      "epoch": 7,
+      "valid_accuracy": 0.9836662946428572,
+      "valid_loss": 0.16726304590702057
+    },
+    {
+      "epoch": 8,
+      "valid_accuracy": 0.9854168526785714,
+      "valid_loss": 0.14835140109062195
+    },
+    {
+      "epoch": 9,
+      "valid_accuracy": 0.9865887276785714,
+      "valid_loss": 0.13396218419075012
+    },
+    {
+      "epoch": 10,
+      "valid_accuracy": 0.9874029017857143,
+      "valid_loss": 0.11756221950054169
+    },
+    {
+      "epoch": 11,
+      "valid_accuracy": 0.9873376116071428,
+      "valid_loss": 0.11253860592842102
+    },
+    {
+      "epoch": 12,
+      "valid_accuracy": 0.9877767857142857,
+      "valid_loss": 0.10683298110961914
+    },
+    {
+      "epoch": 13,
+      "valid_accuracy": 0.988140625,
+      "valid_loss": 0.10190533101558685
+    },
+    {
+      "epoch": 14,
+      "valid_accuracy": 0.9870708705357143,
+      "valid_loss": 0.09676279872655869
+    },
+    {
+      "epoch": 15,
+      "valid_accuracy": 0.9876378348214285,
+      "valid_loss": 0.09168348461389542
+    },
+    {
+      "epoch": 16,
+      "valid_accuracy": 0.9877299107142857,
+      "valid_loss": 0.08956778049468994
+    },
+    {
+      "epoch": 17,
+      "valid_accuracy": 0.9879760044642857,
+      "valid_loss": 0.08598294854164124
+    },
+    {
+      "epoch": 18,
+      "valid_accuracy": 0.9876104910714286,
+      "valid_loss": 0.08507612347602844
+    },
+    {
+      "epoch": 19,
+      "valid_accuracy": 0.9878303571428572,
+      "valid_loss": 0.08230164647102356
+    },
+    {
+      "epoch": 20,
+      "valid_accuracy": 0.9851584821428572,
+      "valid_loss": 0.09098640084266663
+    },
+    {
+      "epoch": 21,
+      "valid_accuracy": 0.9861696428571428,
+      "valid_loss": 0.0856642797589302
+    },
+    {
+      "epoch": 22,
+      "valid_accuracy": 0.9861724330357143,
+      "valid_loss": 0.08434773981571198
+    },
+    {
+      "epoch": 23,
+      "valid_accuracy": 0.9864347098214286,
+      "valid_loss": 0.08228306472301483
+    },
+    {
+      "epoch": 24,
+      "valid_accuracy": 0.9865251116071428,
+      "valid_loss": 0.08104202151298523
+    },
+    {
+      "epoch": 25,
+      "valid_accuracy": 0.9862042410714286,
+      "valid_loss": 0.08182608336210251
+    },
+    {
+      "epoch": 26,
+      "valid_accuracy": 0.9860993303571428,
+      "valid_loss": 0.08147624135017395
+    },
+    {
+      "epoch": 27,
+      "valid_accuracy": 0.9861205357142857,
+      "valid_loss": 0.08101669698953629
+    },
+    {
+      "epoch": 28,
+      "valid_accuracy": 0.9858627232142857,
+      "valid_loss": 0.08183751255273819
+    },
+    {
+      "epoch": 29,
+      "valid_accuracy": 0.9857684151785714,
+      "valid_loss": 0.08187912404537201
+    },
+    {
+      "epoch": 30,
+      "valid_accuracy": 0.9858270089285714,
+      "valid_loss": 0.08155642449855804
+    },
+    {
+      "epoch": 31,
+      "valid_accuracy": 0.9858794642857143,
+      "valid_loss": 0.08126260340213776
+    }
+  ],
+  "checkpoint_path": "/workspace/checkpoints/gated_delta_net-d128-lr1.0e-03/best.pt",
+  "timestamp": "2026-03-03T17:06:45.363103",
+  "sweep_id": "stp-t-mqar-p1-094ae0"
+}

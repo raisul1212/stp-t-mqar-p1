@@ -1,0 +1,50 @@
+{
+  "run_id": "based-d128-lr3.2e-03",
+  "model_name": "based",
+  "d_model": 128,
+  "n_layers": 2,
+  "vocab_size": 8192,
+  "num_parameters": 1105792,
+  "learning_rate": 0.0031622776601683794,
+  "max_epochs": 32,
+  "training_time_seconds": 66.6,
+  "best_epoch": 1,
+  "best_valid_accuracy": 0.9943387276785715,
+  "best_valid_loss": 0.08368350565433502,
+  "best_accuracy_by_kv_pairs": {
+    "4": 0.99975,
+    "8": 0.999875,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.999984375,
+    "128": 0.9994609375,
+    "256": 0.96130078125
+  },
+  "final_epoch": 1,
+  "final_valid_accuracy": 0.9943387276785715,
+  "final_valid_loss": 0.08368350565433502,
+  "final_accuracy_by_kv_pairs": {
+    "4": 0.99975,
+    "8": 0.999875,
+    "16": 1.0,
+    "32": 1.0,
+    "64": 0.999984375,
+    "128": 0.9994609375,
+    "256": 0.96130078125
+  },
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "valid_accuracy": 0.9898404017857143,
+      "valid_loss": 0.11693334579467773
+    },
+    {
+      "epoch": 1,
+      "valid_accuracy": 0.9943387276785715,
+      "valid_loss": 0.08368350565433502
+    }
+  ],
+  "checkpoint_path": "/workspace/checkpoints/based-d128-lr3.2e-03/best.pt",
+  "timestamp": "2026-03-03T07:27:20.733738",
+  "sweep_id": "stp-t-mqar-p1-5e0152"
+}

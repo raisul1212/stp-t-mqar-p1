@@ -10,3 +10,4 @@ wandb/
 *.ckpt
 ".claude/" 
 ".claude/" 
+experiment_log.txt

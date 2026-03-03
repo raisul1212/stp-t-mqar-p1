@@ -1,0 +1,50 @@
+{
+  "run_id": "attention-d128-lr3.2e-02",
+  "model_name": "attention",
+  "d_model": 128,
+  "n_layers": 2,
+  "vocab_size": 8192,
+  "num_parameters": 1132928,
+  "learning_rate": 0.03162277660168379,
+  "max_epochs": 32,
+  "training_time_seconds": 20.4,
+  "best_epoch": 1,
+  "best_valid_accuracy": 0.9986936383928572,
+  "best_valid_loss": 0.024820275604724884,
+  "best_accuracy_by_kv_pairs": {
+    "4": 0.99975,
+    "8": 0.999625,
+    "16": 0.9998125,
+    "32": 0.9994375,
+    "64": 0.998984375,
+    "128": 0.998,
+    "256": 0.99524609375
+  },
+  "final_epoch": 1,
+  "final_valid_accuracy": 0.9986936383928572,
+  "final_valid_loss": 0.024820275604724884,
+  "final_accuracy_by_kv_pairs": {
+    "4": 0.99975,
+    "8": 0.999625,
+    "16": 0.9998125,
+    "32": 0.9994375,
+    "64": 0.998984375,
+    "128": 0.998,
+    "256": 0.99524609375
+  },
+  "epoch_history": [
+    {
+      "epoch": 0,
+      "valid_accuracy": 0.0017806919642857143,
+      "valid_loss": 8.28312873840332
+    },
+    {
+      "epoch": 1,
+      "valid_accuracy": 0.9986936383928572,
+      "valid_loss": 0.024820275604724884
+    }
+  ],
+  "checkpoint_path": "/workspace/checkpoints/attention-d128-lr3.2e-02/best.pt",
+  "timestamp": "2026-03-01T15:34:45.944983",
+  "sweep_id": "stp-t-mqar-p1-f5237d"
+}
