@@ -1,0 +1,127 @@
+# STP-T MQAR Phase 1 — Run Configuration (v2, CSV-driven)
+# ===========================================================
+# Edit this file to change the sweep. No Python changes needed.
+#
+# Columns:
+#   enabled     : 1 = run, 0 = skip
+#   model       : attention | based | retnet | gla | gated_delta_net | stp_v3 | stp_v4
+#   d_model     : model width (64, 128, 256)
+#   num_heads   : attention heads (dk = d_model / num_heads)
+#   n_layers    : transformer depth
+#   lr          : learning rate
+#   max_epochs  : training epochs
+#   batch_size  : TRAIN batch size (test = batch_size // 8)
+#   run_id      : unique ID for results filename and WandB run name
+#
+# OOM note: d=256 may need batch_size=64 on <48GB GPUs.
+# See RUNSHEET.md for CLI commands to bulk-edit columns.
+#
+enabled,model,d_model,num_heads,n_layers,lr,max_epochs,batch_size,run_id
+# ═══════════════════════════════════════════════════════════
+# ORIGINAL P1 SWEEP (all models × all d_model × 4 LRs)
+# Results already collected — set enabled=0
+# ═══════════════════════════════════════════════════════════
+# ── Attention (MHA, oracle baseline) ──
+0,attention,32,2,2,1e-3,32,256,attention-d32-lr1.0e-03
+0,attention,32,2,2,3.2e-3,32,256,attention-d32-lr3.2e-03
+0,attention,32,2,2,1e-2,32,256,attention-d32-lr1.0e-02
+0,attention,32,2,2,3.2e-2,32,256,attention-d32-lr3.2e-02
+0,attention,64,2,2,1e-3,32,256,attention-d64-lr1.0e-03
+0,attention,64,2,2,3.2e-3,32,256,attention-d64-lr3.2e-03
+0,attention,64,2,2,1e-2,32,256,attention-d64-lr1.0e-02
+0,attention,64,2,2,3.2e-2,32,256,attention-d64-lr3.2e-02
+0,attention,128,2,2,1e-3,32,256,attention-d128-lr1.0e-03
+0,attention,128,2,2,3.2e-3,32,256,attention-d128-lr3.2e-03
+0,attention,128,2,2,1e-2,32,256,attention-d128-lr1.0e-02
+0,attention,128,2,2,3.2e-2,32,256,attention-d128-lr3.2e-02
+# ── Based ──
+0,based,48,1,2,1e-3,32,256,based-d48-lr1.0e-03
+0,based,48,1,2,3.2e-3,32,256,based-d48-lr3.2e-03
+0,based,48,1,2,1e-2,32,256,based-d48-lr1.0e-02
+0,based,48,1,2,3.2e-2,32,256,based-d48-lr3.2e-02
+0,based,64,1,2,1e-3,32,256,based-d64-lr1.0e-03
+0,based,64,1,2,3.2e-3,32,256,based-d64-lr3.2e-03
+0,based,64,1,2,1e-2,32,256,based-d64-lr1.0e-02
+0,based,64,1,2,3.2e-2,32,256,based-d64-lr3.2e-02
+0,based,128,1,2,1e-3,32,256,based-d128-lr1.0e-03
+0,based,128,1,2,3.2e-3,32,256,based-d128-lr3.2e-03
+0,based,128,1,2,1e-2,32,256,based-d128-lr1.0e-02
+0,based,128,1,2,3.2e-2,32,256,based-d128-lr3.2e-02
+# ── RetNet (fla) ──
+0,retnet,64,2,2,1e-3,32,256,retnet-d64-lr1.0e-03
+0,retnet,64,2,2,3.2e-3,32,256,retnet-d64-lr3.2e-03
+0,retnet,64,2,2,1e-2,32,256,retnet-d64-lr1.0e-02
+0,retnet,64,2,2,3.2e-2,32,256,retnet-d64-lr3.2e-02
+0,retnet,128,2,2,1e-3,32,256,retnet-d128-lr1.0e-03
+0,retnet,128,2,2,3.2e-3,32,256,retnet-d128-lr3.2e-03
+0,retnet,128,2,2,1e-2,32,256,retnet-d128-lr1.0e-02
+0,retnet,128,2,2,3.2e-2,32,256,retnet-d128-lr3.2e-02
+0,retnet,256,2,2,1e-3,32,64,retnet-d256-lr1.0e-03
+0,retnet,256,2,2,3.2e-3,32,64,retnet-d256-lr3.2e-03
+0,retnet,256,2,2,1e-2,32,64,retnet-d256-lr1.0e-02
+0,retnet,256,2,2,3.2e-2,32,64,retnet-d256-lr3.2e-02
+# ── GLA (fla) ──
+0,gla,64,2,2,1e-3,32,256,gla-d64-lr1.0e-03
+0,gla,64,2,2,3.2e-3,32,256,gla-d64-lr3.2e-03
+0,gla,64,2,2,1e-2,32,256,gla-d64-lr1.0e-02
+0,gla,64,2,2,3.2e-2,32,256,gla-d64-lr3.2e-02
+0,gla,128,2,2,1e-3,32,256,gla-d128-lr1.0e-03
+0,gla,128,2,2,3.2e-3,32,256,gla-d128-lr3.2e-03
+0,gla,128,2,2,1e-2,32,256,gla-d128-lr1.0e-02
+0,gla,128,2,2,3.2e-2,32,256,gla-d128-lr3.2e-02
+0,gla,256,2,2,1e-3,32,64,gla-d256-lr1.0e-03
+0,gla,256,2,2,3.2e-3,32,64,gla-d256-lr3.2e-03
+0,gla,256,2,2,1e-2,32,64,gla-d256-lr1.0e-02
+0,gla,256,2,2,3.2e-2,32,64,gla-d256-lr3.2e-02
+# ── Gated DeltaNet (fla) ──
+0,gated_delta_net,64,2,2,1e-3,32,256,gated_delta_net-d64-lr1.0e-03
+0,gated_delta_net,64,2,2,3.2e-3,32,256,gated_delta_net-d64-lr3.2e-03
+0,gated_delta_net,64,2,2,1e-2,32,256,gated_delta_net-d64-lr1.0e-02
+0,gated_delta_net,64,2,2,3.2e-2,32,256,gated_delta_net-d64-lr3.2e-02
+0,gated_delta_net,128,2,2,1e-3,32,256,gated_delta_net-d128-lr1.0e-03
+0,gated_delta_net,128,2,2,3.2e-3,32,256,gated_delta_net-d128-lr3.2e-03
+0,gated_delta_net,128,2,2,1e-2,32,256,gated_delta_net-d128-lr1.0e-02
+0,gated_delta_net,128,2,2,3.2e-2,32,256,gated_delta_net-d128-lr3.2e-02
+0,gated_delta_net,256,2,2,1e-3,32,64,gated_delta_net-d256-lr1.0e-03
+0,gated_delta_net,256,2,2,3.2e-3,32,64,gated_delta_net-d256-lr3.2e-03
+0,gated_delta_net,256,2,2,1e-2,32,64,gated_delta_net-d256-lr1.0e-02
+0,gated_delta_net,256,2,2,3.2e-2,32,64,gated_delta_net-d256-lr3.2e-02
+# ── STP-T v3 (this work, content-independent) ──
+0,stp_v3,64,2,2,1e-3,32,256,stp_v3-d64-lr1.0e-03
+0,stp_v3,64,2,2,3.2e-3,32,256,stp_v3-d64-lr3.2e-03
+0,stp_v3,64,2,2,1e-2,32,256,stp_v3-d64-lr1.0e-02
+0,stp_v3,64,2,2,3.2e-2,32,256,stp_v3-d64-lr3.2e-02
+0,stp_v3,128,2,2,1e-3,32,256,stp_v3-d128-lr1.0e-03
+0,stp_v3,128,2,2,3.2e-3,32,256,stp_v3-d128-lr3.2e-03
+0,stp_v3,128,2,2,1e-2,32,256,stp_v3-d128-lr1.0e-02
+0,stp_v3,128,2,2,3.2e-2,32,256,stp_v3-d128-lr3.2e-02
+0,stp_v3,256,2,2,1e-3,32,64,stp_v3-d256-lr1.0e-03
+0,stp_v3,256,2,2,3.2e-3,32,64,stp_v3-d256-lr3.2e-03
+0,stp_v3,256,2,2,1e-2,32,64,stp_v3-d256-lr1.0e-02
+0,stp_v3,256,2,2,3.2e-2,32,64,stp_v3-d256-lr3.2e-02
+# ── STP-T v4 (this work, content-adaptive) ──
+0,stp_v4,64,2,2,1e-3,32,256,stp_v4-d64-lr1.0e-03
+0,stp_v4,64,2,2,3.2e-3,32,256,stp_v4-d64-lr3.2e-03
+0,stp_v4,64,2,2,1e-2,32,256,stp_v4-d64-lr1.0e-02
+0,stp_v4,64,2,2,3.2e-2,32,256,stp_v4-d64-lr3.2e-02
+0,stp_v4,128,2,2,1e-3,32,256,stp_v4-d128-lr1.0e-03
+0,stp_v4,128,2,2,3.2e-3,32,256,stp_v4-d128-lr3.2e-03
+0,stp_v4,128,2,2,1e-2,32,256,stp_v4-d128-lr1.0e-02
+0,stp_v4,128,2,2,3.2e-2,32,256,stp_v4-d128-lr3.2e-02
+0,stp_v4,256,2,2,1e-3,32,64,stp_v4-d256-lr1.0e-03
+0,stp_v4,256,2,2,3.2e-3,32,64,stp_v4-d256-lr3.2e-03
+0,stp_v4,256,2,2,1e-2,32,64,stp_v4-d256-lr1.0e-02
+0,stp_v4,256,2,2,3.2e-2,32,64,stp_v4-d256-lr3.2e-02
+# ═══════════════════════════════════════════════════════════
+# QUANTIZATION RUNS — best-LR only, checkpoint saving enabled
+# These train fresh with checkpoint saving for post-training quantization.
+# Best LRs from whitepaper Table 9.
+# ═══════════════════════════════════════════════════════════
+# STP-T v3 best LR at d=128: 3.2e-3 (84.5% overall)
+1,stp_v3,128,2,2,3.2e-3,32,256,stp_v3-d128-lr3.2e-03-quant
+# STP-T v3 best LR at d=256: 3.2e-3 (97.4% overall)
+1,stp_v3,256,2,2,3.2e-3,32,64,stp_v3-d256-lr3.2e-03-quant
+# RetNet best LR at d=128: 3e-3 (67.9% overall)
+1,retnet,128,2,2,3e-3,32,256,retnet-d128-lr3.0e-03-quant
+# RetNet best LR at d=256: 3e-3 (75.8% overall)
+1,retnet,256,2,2,3e-3,32,64,retnet-d256-lr3.0e-03-quant
