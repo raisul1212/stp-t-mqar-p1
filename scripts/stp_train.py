@@ -182,8 +182,29 @@ class Trainer:
                     loss = loss + sum(auxiliary_loss)
 
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+            # ── Gradient clipping + NaN safety ──
+            # STP physics parameters (softplus, exp, tanh) can produce
+            # overflow if gradients push beta_tau, C_ch, etc. to extreme
+            # values. Three layers of protection:
+            #
+            # 1. Clip gradient norms (prevents large parameter updates)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=0.5)
+
+            # 2. Zero out any NaN/Inf gradients (prevents NaN propagation)
+            for p in self.model.parameters():
+                if p.grad is not None and not torch.isfinite(p.grad).all():
+                    p.grad.zero_()
+
             self.optimizer.step()
+
+            # 3. Detect NaN loss and stop training early
+            loss_val = loss.item()
+            if not np.isfinite(loss_val):
+                print(f"\n  WARNING: NaN/Inf loss detected at epoch {epoch_idx}. "
+                      f"Stopping training early. Best accuracy so far: {self.best_accuracy:.4f}")
+                self._nan_detected = True
+                return
             iterator.set_postfix({"loss": loss.item()})
             self.logger.log({"train/loss": loss.item(), "epoch": epoch_idx})
 
@@ -345,6 +366,7 @@ class Trainer:
 
     def fit(self):
         self.train_start_time = time.time()
+        self._nan_detected = False
         self.model.to(self.device)
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = optim.AdamW(
@@ -357,6 +379,13 @@ class Trainer:
         )
         for epoch_idx in range(self.max_epochs):
             self.train_epoch(epoch_idx)
+
+            # Break if NaN was detected during training
+            if self._nan_detected:
+                print(f"  Training halted at epoch {epoch_idx} due to NaN loss.")
+                print(f"  Best accuracy before NaN: {self.best_accuracy:.4f} (epoch {self.best_epoch})")
+                break
+
             metrics = self.test(epoch_idx)
 
             # early stopping
