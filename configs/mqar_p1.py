@@ -57,7 +57,8 @@ _TEST = [
 ]
 
 def _data(bs): return DataConfig(train_configs=_TRAIN, test_configs=_TEST,
-    batch_size=(bs, max(1, bs // 8)), cache_dir="/workspace/zoology_cache")
+    batch_size=(bs, max(1, bs // 8)),
+    cache_dir=os.path.join(os.environ.get("WORKSPACE", os.path.expanduser("~")), "zoology_cache"))
 
 def _conv(): return {"name": "zoology.mixers.base_conv.BaseConv",
     "kwargs": {"l_max": SEQ_LEN_MAX, "kernel_size": 3, "implicit_long_conv": True}}
