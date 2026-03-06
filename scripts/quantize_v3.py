@@ -581,12 +581,20 @@ def evaluate_mqar(model: STPv3Standalone, kv_counts: List[int],
 # ═══════════════════════════════════════════════════════════════
 
 def run_quantization_sweep(args):
-    """Run the full quantization experiment."""
+    """Run the full quantization experiment.
+    
+    Strategy: Train ONCE per seed, save checkpoint, then run all
+    quantization evaluations from the saved model. Evaluation is fast
+    (seconds per bit-width); only training is slow.
+    """
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Device: {device}")
 
     kv_counts = [4, 8, 16, 32, 64, 128, 256]
+    n_epochs = 8 if args.quick else 32
+    bs = 64 if args.d_model >= 256 else 256
+
     all_results = {
         "config": {
             "d_model": args.d_model,
@@ -594,33 +602,71 @@ def run_quantization_sweep(args):
             "n_layers": args.n_layers,
             "bits_tested": args.bits,
             "seeds": args.seeds,
+            "n_epochs": n_epochs,
             "vocab_size": 8192,
         },
         "runs": []
     }
 
+    # ─── Phase 1: Train models (slow) ───────────────────────────
+    # Train one model per seed, save checkpoints.
+    # If checkpoint already exists, skip training and load it.
+
+    ckpt_dir = Path(args.output).parent if args.output else Path(".")
+    models = {}
+
     for seed in range(args.seeds):
+        ckpt_path = ckpt_dir / f"quant_model_d{args.d_model}_seed{seed}.pt"
+
+        if ckpt_path.exists() and not args.retrain:
+            print(f"\n{'#'*60}")
+            print(f"# SEED {seed} — Loading checkpoint: {ckpt_path}")
+            print(f"{'#'*60}")
+            model = STPv3Standalone(
+                d_model=args.d_model, num_heads=args.num_heads,
+                vocab_size=8192, n_layers=args.n_layers
+            ).to(device)
+            model.load_state_dict(torch.load(ckpt_path, map_location=device, weights_only=True))
+            model.eval()
+            print(f"  Loaded. Skipping training.")
+        else:
+            print(f"\n{'#'*60}")
+            print(f"# SEED {seed} — Training from scratch")
+            print(f"{'#'*60}")
+            model = train_v3(
+                d_model=args.d_model,
+                num_heads=args.num_heads,
+                n_layers=args.n_layers,
+                lr=3.2e-3,
+                n_epochs=n_epochs,
+                batch_size=bs,
+                device=device,
+                seed=seed,
+            )
+            # Save checkpoint
+            ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(model.state_dict(), ckpt_path)
+            print(f"  Checkpoint saved: {ckpt_path}")
+
+        models[seed] = model
+
+    # ─── Phase 2: Quantization evaluations (fast) ──────────────
+    # All bit-widths × all conditions × all seeds.
+    # This is pure evaluation — no training, takes minutes total.
+
+    print(f"\n{'='*60}")
+    print(f"QUANTIZATION EVALUATION ({len(args.bits)} bit-widths × 4 conditions × {args.seeds} seeds)")
+    print(f"{'='*60}")
+
+    for seed in range(args.seeds):
+        model = models[seed]
+
         print(f"\n{'#'*60}")
-        print(f"# SEED {seed}")
+        print(f"# SEED {seed} — Evaluating")
         print(f"{'#'*60}")
 
-        # ─── Train FP model ───
-        n_epochs = 8 if args.quick else 32
-        bs = 64 if args.d_model >= 256 else 256
-
-        model = train_v3(
-            d_model=args.d_model,
-            num_heads=args.num_heads,
-            n_layers=args.n_layers,
-            lr=3.2e-3,
-            n_epochs=n_epochs,
-            batch_size=bs,
-            device=device,
-            seed=seed,
-        )
-
         # ─── FP Baseline ───
-        print(f"\nEvaluating FP baseline...")
+        print(f"\nFP baseline...")
         fp_results = evaluate_mqar(model, kv_counts, device=device)
         print(f"  FP overall: {fp_results['overall']:.1f}%")
         for kv, acc in fp_results["per_kv"].items():
@@ -632,8 +678,6 @@ def run_quantization_sweep(args):
             "quantized": {}
         }
 
-        # ─── Quantization sweeps ───
-
         # A. All-static quantization (the main RRAM experiment)
         print(f"\n{'─'*60}")
         print(f"A. ALL-STATIC QUANTIZATION (W_LTM + λ + G + sign)")
@@ -644,6 +688,10 @@ def run_quantization_sweep(args):
 
         seed_results["quantized"]["all_static"] = {}
         for bits in args.bits:
+            # Clear cached physics before deepcopy
+            for layer in model.layers:
+                layer._lambda = None; layer._G = None; layer._sign = None
+
             qmodel = quantize_model_static(model, bits, components="all")
             qmodel = qmodel.to(device)
             qresults = evaluate_mqar(qmodel, kv_counts, device=device)
@@ -656,7 +704,7 @@ def run_quantization_sweep(args):
 
             seed_results["quantized"]["all_static"][bits] = qresults
             del qmodel
-            torch.cuda.empty_cache() if device == "cuda" else None
+            if device == "cuda": torch.cuda.empty_cache()
 
         # B. Per-component quantization
         print(f"\n{'─'*60}")
@@ -669,6 +717,9 @@ def run_quantization_sweep(args):
             seed_results["quantized"][component] = {}
 
             for bits in args.bits:
+                for layer in model.layers:
+                    layer._lambda = None; layer._G = None; layer._sign = None
+
                 qmodel = quantize_model_static(model, bits, components=component)
                 qmodel = qmodel.to(device)
                 qresults = evaluate_mqar(qmodel, kv_counts, device=device)
@@ -676,7 +727,7 @@ def run_quantization_sweep(args):
                 print(f"    {bits:>4}b {qresults['overall']:>9.1f}% {delta:>+7.1f}")
                 seed_results["quantized"][component][bits] = qresults
                 del qmodel
-                torch.cuda.empty_cache() if device == "cuda" else None
+                if device == "cuda": torch.cuda.empty_cache()
 
         # C. State quantization (F(t) in limited-precision SRAM)
         print(f"\n{'─'*60}")
@@ -686,7 +737,9 @@ def run_quantization_sweep(args):
 
         seed_results["quantized"]["state"] = {}
         for bits in args.bits:
-            # Use FP model but quantize state during forward pass
+            for layer in model.layers:
+                layer._lambda = None; layer._G = None; layer._sign = None
+
             fp_model_copy = copy.deepcopy(model).to(device)
             for layer in fp_model_copy.layers:
                 layer.precompute_physics()
@@ -708,6 +761,9 @@ def run_quantization_sweep(args):
 
         seed_results["quantized"]["full_system"] = {}
         for bits in args.bits:
+            for layer in model.layers:
+                layer._lambda = None; layer._G = None; layer._sign = None
+
             qmodel = quantize_model_static(model, bits, components="all")
             qmodel = qmodel.to(device)
             qresults = evaluate_mqar(
@@ -720,8 +776,16 @@ def run_quantization_sweep(args):
             del qmodel
 
         all_results["runs"].append(seed_results)
-        del model
-        torch.cuda.empty_cache() if device == "cuda" else None
+
+        # Save intermediate results after each seed
+        outpath = args.output or f"quant_results_d{args.d_model}.json"
+        with open(outpath, "w") as f:
+            json.dump(all_results, f, indent=2)
+        print(f"  Intermediate results saved: {outpath}")
+
+    # Clean up models
+    del models
+    if device == "cuda": torch.cuda.empty_cache()
 
     # ─── Aggregate across seeds ───
     print(f"\n{'='*60}")
@@ -745,11 +809,11 @@ def run_quantization_sweep(args):
     fp_overall = np.mean([r["fp_baseline"]["overall"] for r in all_results["runs"]])
     print(f"      FP {'':>3} {fp_overall:>9.1f}%")
 
-    # ─── Save ───
+    # ─── Save final ───
     outpath = args.output or f"quant_results_d{args.d_model}.json"
     with open(outpath, "w") as f:
         json.dump(all_results, f, indent=2)
-    print(f"\nResults saved to: {outpath}")
+    print(f"\nFinal results saved to: {outpath}")
 
     return all_results
 
@@ -805,6 +869,8 @@ if __name__ == "__main__":
                         help="Number of random seeds")
     parser.add_argument("--quick", action="store_true",
                         help="Quick mode: fewer epochs, fewer eval samples")
+    parser.add_argument("--retrain", action="store_true",
+                        help="Force retrain even if checkpoint exists")
     parser.add_argument("--output", type=str, default=None,
                         help="Output JSON path")
     args = parser.parse_args()
