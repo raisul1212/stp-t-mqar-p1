@@ -182,6 +182,7 @@ class Trainer:
                     loss = loss + sum(auxiliary_loss)
 
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
             self.optimizer.step()
             iterator.set_postfix({"loss": loss.item()})
             self.logger.log({"train/loss": loss.item(), "epoch": epoch_idx})
