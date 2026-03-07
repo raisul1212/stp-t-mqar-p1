@@ -151,68 +151,79 @@ def quantize_single_param(model, param_name, bits):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 4. MQAR DATA + EVALUATION
+# 4. EVALUATION USING ZOOLOGY'S DATA PIPELINE
 # ═══════════════════════════════════════════════════════════════
 
-def generate_mqar_batch(batch_size, n_kv_pairs, vocab_size=8192, device="cuda"):
-    """Generate MQAR batch."""
-    seq_len = max(64, 4 * n_kv_pairs)
-    input_ids = torch.zeros(batch_size, seq_len, dtype=torch.long, device=device)
-    targets = torch.zeros(batch_size, seq_len, dtype=torch.long, device=device)
-    mask = torch.zeros(batch_size, seq_len, dtype=torch.bool, device=device)
+def build_test_dataloaders(d_model):
+    """Build Zoology test dataloaders — exact same data as training used."""
+    from zoology.config import DataConfig
+    from zoology.data.multiquery_ar import MQARConfig
+    from zoology.data.utils import prepare_data
 
-    keys = torch.stack([torch.randperm(vocab_size, device=device)[:n_kv_pairs]
-                        for _ in range(batch_size)])
-    values = torch.randint(0, vocab_size, (batch_size, n_kv_pairs), device=device)
+    VOCAB_SIZE = 8192
+    test_configs = [
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=64,   num_examples=1_000, num_kv_pairs=4),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=64,   num_examples=1_000, num_kv_pairs=8),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=64,   num_examples=1_000, num_kv_pairs=16),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=128,  num_examples=1_000, num_kv_pairs=32),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=256,  num_examples=1_000, num_kv_pairs=64),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=512,  num_examples=1_000, num_kv_pairs=128),
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=1024, num_examples=1_000, num_kv_pairs=256),
+    ]
+    # We need a minimal train config too (prepare_data requires both)
+    train_configs = [
+        MQARConfig(vocab_size=VOCAB_SIZE, input_seq_len=64, num_examples=100, num_kv_pairs=4),
+    ]
 
-    for i in range(n_kv_pairs):
-        input_ids[:, 2 * i] = keys[:, i]
-        input_ids[:, 2 * i + 1] = values[:, i]
-
-    query_start = seq_len - n_kv_pairs
-    for b in range(batch_size):
-        perm = torch.randperm(n_kv_pairs, device=device)
-        for i in range(n_kv_pairs):
-            qi = perm[i].item()
-            input_ids[b, query_start + i] = keys[b, qi]
-            targets[b, query_start + i] = values[b, qi]
-            mask[b, query_start + i] = True
-
-    return {"input_ids": input_ids, "targets": targets, "mask": mask}
+    _ws = os.environ.get("WORKSPACE", os.path.expanduser("~"))
+    data = DataConfig(
+        train_configs=train_configs,
+        test_configs=test_configs,
+        batch_size=(64, 64),
+        cache_dir=os.path.join(_ws, "zoology_cache"),
+    )
+    _, test_dataloader = prepare_data(data)
+    return test_dataloader
 
 
 @torch.no_grad()
-def evaluate_mqar(model, kv_counts, vocab_size=8192, n_eval=1000,
-                  batch_size=128, device="cuda"):
-    """Evaluate MQAR accuracy at multiple KV counts."""
+def evaluate_mqar(model, test_dataloader, device="cuda"):
+    """
+    Evaluate using Zoology's actual data pipeline and accuracy computation.
+    Matches stp_train.py's test() method exactly.
+    """
+    from einops import rearrange
+
     model.eval()
-    results = {}
-    total_correct = 0
-    total_count = 0
+    results = []
+    ignore_index = -100
 
-    for kv in kv_counts:
-        correct = 0
-        count = 0
-        n_batches = max(1, n_eval // batch_size)
+    for inputs, targets, slices in test_dataloader:
+        inputs, targets = inputs.to(device), targets.to(device)
 
-        for _ in range(n_batches):
-            bs = min(batch_size, n_eval - count)
-            if bs <= 0:
-                break
-            batch = generate_mqar_batch(bs, kv, vocab_size, device)
-            logits = model(batch["input_ids"])
-            preds = logits[batch["mask"]].argmax(dim=-1)
-            tgts = batch["targets"][batch["mask"]]
-            correct += (preds == tgts).sum().item()
-            count += tgts.numel()
+        logits = model(inputs)
+        preds = logits.argmax(dim=-1)
 
-        acc = 100.0 * correct / max(count, 1)
-        results[kv] = acc
-        total_correct += correct
-        total_count += count
+        # Compute per-example accuracy (same as stp_train.py compute_metrics)
+        for pred, target, slc in zip(preds, targets, slices):
+            mask = target != ignore_index
+            if mask.sum() > 0:
+                acc = (pred[mask] == target[mask]).float().mean().item()
+            else:
+                acc = 0.0
+            results.append({"accuracy": acc, **slc})
 
-    overall = 100.0 * total_correct / max(total_count, 1)
-    return {"overall": overall, "per_kv": results}
+    import pandas as pd
+    df = pd.DataFrame(results)
+    overall = df["accuracy"].mean()
+
+    # Per-KV accuracy
+    per_kv = {}
+    if "num_kv_pairs" in df.columns:
+        for kv, group in df.groupby("num_kv_pairs"):
+            per_kv[int(kv)] = group["accuracy"].mean()
+
+    return {"overall": float(overall) * 100, "per_kv": {k: float(v) * 100 for k, v in per_kv.items()}}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -221,25 +232,29 @@ def evaluate_mqar(model, kv_counts, vocab_size=8192, n_eval=1000,
 
 def run(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    kv_counts = [4, 8, 16, 32, 64, 128, 256]
 
     print(f"Device: {device}")
     print(f"Checkpoint: {args.checkpoint}")
     print(f"d_model: {args.d_model}")
     print(f"Bits: {args.bits}")
 
-    # ─── Load ───
+    # ─── Load model ───
     print(f"\n{'='*60}")
     print("Loading checkpoint...")
     model, ckpt = load_zoology_model(args.checkpoint, args.d_model, device)
+
+    # ─── Build test data (once, reuse for all evaluations) ───
+    print(f"\nBuilding test data (Zoology MQAR pipeline)...", flush=True)
+    test_dl = build_test_dataloaders(args.d_model)
+    print(f"  Test batches: {len(test_dl)}")
 
     # ─── FP Baseline ───
     print(f"\n{'='*60}")
     print("FP BASELINE")
     print(f"{'='*60}", flush=True)
-    fp = evaluate_mqar(model, kv_counts, device=device)
+    fp = evaluate_mqar(model, test_dl, device=device)
     print(f"  Overall: {fp['overall']:.1f}%")
-    for kv in kv_counts:
+    for kv in sorted(fp["per_kv"].keys()):
         print(f"    kv={kv}: {fp['per_kv'][kv]:.1f}%")
 
     results = {
@@ -254,14 +269,16 @@ def run(args):
         "quantized": {},
     }
 
+    kv_list = sorted(fp["per_kv"].keys())
+
     def header():
         return (f"{'Bits':>6} {'Cells/wt':>8} {'Overall':>9} {'Δ':>7}  " +
-                "  ".join(f"{'kv'+str(kv):>6}" for kv in kv_counts))
+                "  ".join(f"{'kv'+str(kv):>6}" for kv in kv_list))
 
-    def row(bits, qr, tag=""):
+    def row(bits, qr):
         d = qr["overall"] - fp["overall"]
         cells = f"{2*bits}" if bits < 16 else "FP"
-        kvs = "  ".join(f"{qr['per_kv'].get(kv,0):5.1f}%" for kv in kv_counts)
+        kvs = "  ".join(f"{qr['per_kv'].get(kv,0):5.1f}%" for kv in kv_list)
         return f"  {bits:>4}b {cells:>8} {qr['overall']:>8.1f}% {d:>+6.1f}  {kvs}"
 
     # ─── A. W_LTM only ───
@@ -273,7 +290,7 @@ def run(args):
     results["quantized"]["wltm_only"] = {}
     for bits in args.bits:
         qm = quantize_wltm_only(model, bits)
-        qr = evaluate_mqar(qm, kv_counts, device=device)
+        qr = evaluate_mqar(qm, test_dl, device=device)
         print(row(bits, qr), flush=True)
         results["quantized"]["wltm_only"][bits] = qr
         del qm; torch.cuda.empty_cache() if device == "cuda" else None
@@ -287,7 +304,7 @@ def run(args):
     results["quantized"]["all_stp"] = {}
     for bits in args.bits:
         qm = quantize_all_stp(model, bits)
-        qr = evaluate_mqar(qm, kv_counts, device=device)
+        qr = evaluate_mqar(qm, test_dl, device=device)
         print(row(bits, qr), flush=True)
         results["quantized"]["all_stp"][bits] = qr
         del qm; torch.cuda.empty_cache() if device == "cuda" else None
@@ -301,7 +318,7 @@ def run(args):
     results["quantized"]["full_model"] = {}
     for bits in args.bits:
         qm = quantize_full_model(model, bits)
-        qr = evaluate_mqar(qm, kv_counts, device=device)
+        qr = evaluate_mqar(qm, test_dl, device=device)
         print(row(bits, qr), flush=True)
         results["quantized"]["full_model"][bits] = qr
         del qm; torch.cuda.empty_cache() if device == "cuda" else None
@@ -316,7 +333,7 @@ def run(args):
     for pname in ["W_LTM", "V_gs", "V_T0", "beta_tau", "beta_gm",
                    "C_ch", "gamma", "alpha_ppd", "IC_threshold"]:
         qm = quantize_single_param(model, pname, 4)
-        qr = evaluate_mqar(qm, kv_counts, device=device)
+        qr = evaluate_mqar(qm, test_dl, device=device)
         d = qr["overall"] - fp["overall"]
         print(f"  {pname:>16} {qr['overall']:>8.1f}% {d:>+6.1f}", flush=True)
         results["quantized"]["per_param_4bit"][pname] = qr
