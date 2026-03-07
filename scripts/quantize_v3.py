@@ -25,6 +25,12 @@ import time
 from pathlib import Path
 from typing import List, Dict
 
+# Ensure zoology is importable regardless of working directory.
+# Zoology may be pip-installed or just cloned at ~/zoology.
+_ZOOLOGY_DIR = os.environ.get("ZOOLOGY_DIR", os.path.expanduser("~/zoology"))
+if _ZOOLOGY_DIR not in sys.path and os.path.isdir(_ZOOLOGY_DIR):
+    sys.path.insert(0, _ZOOLOGY_DIR)
+
 import numpy as np
 import torch
 import torch.nn as nn
