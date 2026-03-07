@@ -46,8 +46,9 @@ from zoology.metrics import compute_mse, compute_ce_with_embeddings
 # Results directory (set by environment variable or default)
 # ─────────────────────────────────────────────────────────────
 
-RESULTS_DIR = os.environ.get("STP_RESULTS_DIR", "/workspace/results")
-CHECKPOINT_DIR = os.environ.get("STP_CHECKPOINT_DIR", "/workspace/checkpoints")
+_WORKSPACE = os.environ.get("WORKSPACE", os.path.expanduser("~"))
+RESULTS_DIR = os.environ.get("STP_RESULTS_DIR", os.path.join(_WORKSPACE, "results"))
+CHECKPOINT_DIR = os.environ.get("STP_CHECKPOINT_DIR", os.path.join(_WORKSPACE, "checkpoints"))
 SAVE_CHECKPOINTS = os.environ.get("STP_SAVE_CHECKPOINTS", "best").lower()  # "best", "all", "none"
 
 

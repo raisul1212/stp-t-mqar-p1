@@ -118,10 +118,10 @@ enabled,model,d_model,num_heads,n_layers,lr,max_epochs,batch_size,run_id
 # Best LRs from whitepaper Table 9.
 # ═══════════════════════════════════════════════════════════
 # STP-T v3 best LR at d=128: 3.2e-3 (84.5% overall)
-1,stp_v3,128,2,2,3.2e-3,32,256,stp_v3-d128-lr3.2e-03-quant
+1,stp_v3,128,2,2,3e-3,32,256,stp_v3-d128-lr3.0e-03-quant
 # STP-T v3 best LR at d=256: 3.2e-3 (97.4% overall)
-1,stp_v3,256,2,2,3.2e-3,32,64,stp_v3-d256-lr3.2e-03-quant
+1,stp_v3,256,2,2,3e-3,32,64,stp_v3-d256-lr3.0e-03-quant
 # RetNet best LR at d=128: 3e-3 (67.9% overall)
-1,retnet,128,2,2,3e-3,32,256,retnet-d128-lr3.0e-03-quant
+0,retnet,128,2,2,3e-3,32,256,retnet-d128-lr3.0e-03-quant
 # RetNet best LR at d=256: 3e-3 (75.8% overall)
-1,retnet,256,2,2,3e-3,32,64,retnet-d256-lr3.0e-03-quant
+0,retnet,256,2,2,3e-3,32,64,retnet-d256-lr3.0e-03-quant
